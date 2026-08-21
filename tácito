@@ -1,0 +1,873 @@
+local Players = game:GetService("Players")
+local TextChatService = game:GetService("TextChatService")
+local Workspace = workspace
+local TweenService = game:GetService("TweenService")
+local Debris = game:GetService("Debris")
+local Lighting = game:GetService("Lighting")
+local StarterGui = game:GetService("StarterGui")
+
+local LocalPlayer = Players.LocalPlayer
+
+local Donos = { 
+    ["guyscript89702"] = true, 
+    ["poathecat123"] = true, 
+}
+
+local UsuariosTacito = {
+    ["rafablox13478"] = true,
+    ["programador676"] = true,
+    [""] = true,
+    [""] = true,
+    [""] = true,
+    [""] = true
+}
+
+local function TemAcesso(player)
+    return Donos[player.Name] == true or UsuariosTacito[player.Name] == true
+end
+
+if not TemAcesso(LocalPlayer) then
+    LocalPlayer:Kick("Você não tem permissão para ter esse painel!")
+    return
+end
+
+local comandosProcessados = {}
+local JAILED_PLAYERS = {}
+local FROZEN_PLAYERS = {}
+local sendCmdsToChat = false
+
+local targetPlayer = "" 
+local sayTargetPlayer = "" 
+local jumpscareTargetPlayer = ""
+local vipMessageText = ""
+
+local OldLighting = {}
+
+local function SaveLighting()
+    OldLighting.Brightness = Lighting.Brightness
+    OldLighting.Ambient = Lighting.Ambient
+    OldLighting.OutdoorAmbient = Lighting.OutdoorAmbient
+    OldLighting.FogColor = Lighting.FogColor
+    OldLighting.FogEnd = Lighting.FogEnd
+    OldLighting.FogStart = Lighting.FogStart
+end
+
+local function RestoreNormalWorld()
+    local back = workspace:FindFirstChild("LightClient_Backrooms")
+    if back then back:Destroy() end
+
+    if OldLighting.Brightness then
+        Lighting.Brightness = OldLighting.Brightness
+        Lighting.Ambient = OldLighting.Ambient
+        Lighting.OutdoorAmbient = OldLighting.OutdoorAmbient
+        Lighting.FogColor = OldLighting.FogColor
+        Lighting.FogEnd = OldLighting.FogEnd
+        Lighting.FogStart = OldLighting.FogStart
+    end
+end
+
+local function BackroomsSystem()
+    local character = LocalPlayer.Character
+    if not character then return end
+
+    local root = character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    SaveLighting()
+
+    local mapID = 10581711055
+    local distantPosition = Vector3.new(0,10000,0)
+    local teleportPosition = Vector3.new(59.06,9996.70,19.42)
+
+    local effect = Instance.new("Part")
+    effect.Size = Vector3.new(8,8,8)
+    effect.Position = root.Position
+    effect.Anchored = true
+    effect.CanCollide = false
+    effect.Material = Enum.Material.Neon
+    effect.BrickColor = BrickColor.new("Bright yellow")
+    effect.Transparency = 0.3
+    effect.Parent = workspace
+
+    local light = Instance.new("PointLight")
+    light.Brightness = 8
+    light.Range = 12
+    light.Color = Color3.fromRGB(255,255,150)
+    light.Parent = effect
+
+    TweenService:Create(effect,TweenInfo.new(0.5,Enum.EasingStyle.Quad),
+        {Size = Vector3.new(15,15,15),Transparency = 0.8}
+    ):Play()
+
+    local success,mapa = pcall(function()
+        return game:GetObjects("rbxassetid://"..mapID)[1]
+    end)
+
+    if success and mapa then
+        local old = workspace:FindFirstChild("LightClient_Backrooms")
+        if old then old:Destroy() end
+
+        local folder = Instance.new("Folder")
+        folder.Name = "LightClient_Backrooms"
+        folder.Parent = workspace
+
+        mapa.Parent = folder
+
+        local part = mapa:FindFirstChildWhichIsA("BasePart")
+        if part then
+            mapa.PrimaryPart = part
+            mapa:SetPrimaryPartCFrame(CFrame.new(distantPosition))
+        end
+
+        Lighting.Brightness = 0.6
+        Lighting.Ambient = Color3.fromRGB(255,200,100)
+        Lighting.OutdoorAmbient = Color3.fromRGB(255,200,100)
+        Lighting.FogColor = Color3.fromRGB(255,200,100)
+        Lighting.FogEnd = 250
+        Lighting.FogStart = 50
+    end
+
+    root.CFrame = CFrame.new(teleportPosition)
+
+    Debris:AddItem(effect,1)
+
+    StarterGui:SetCore("ChatMakeSystemMessage",{
+        Text="[TACITO HUB] Você entrou nas Backrooms!",
+        Color=Color3.fromRGB(255,255,255),
+        Font=Enum.Font.GothamBold
+    })
+end
+
+local function setupTags(player)
+    local function aplicarTag(char)
+        if not char then return end
+        local head = char:WaitForChild("Head", 10)
+        if not head then return end
+        
+        local old = head:FindFirstChild("SpecialTag")
+        if not old and TemAcesso(player) then
+            local gui = Instance.new("BillboardGui")
+            gui.Name = "SpecialTag"
+            gui.Size = UDim2.new(0,220,0,50)
+            gui.StudsOffset = Vector3.new(0,3,0)
+            gui.AlwaysOnTop = true
+            gui.Adornee = head
+            gui.Parent = head
+
+            local bg = Instance.new("Frame")
+            bg.Size = UDim2.new(1,0,1,0)
+            bg.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+            bg.BackgroundTransparency = 0.1
+            bg.BorderSizePixel = 0
+            bg.Parent = gui
+
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0,12)
+            corner.Parent = bg
+
+            local text = Instance.new("TextLabel")
+            text.Size = UDim2.new(1,0,1,0)
+            text.BackgroundTransparency = 1
+            text.Font = Enum.Font.GothamBold
+            text.TextScaled = true
+            text.TextStrokeTransparency = 0
+            text.TextStrokeColor3 = Color3.fromRGB(0,0,0)
+
+            if Donos[player.Name] then
+                text.Text = "TACITO OWNER"
+            else
+                text.Text = "TACITO USER"
+            end
+            text.Parent = bg
+
+            task.spawn(function()
+                local tweenInfo = TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+                while text.Parent and gui.Parent and head.Parent do
+                    local t1 = TweenService:Create(text, tweenInfo, {TextColor3 = Color3.fromRGB(255, 215, 0)})
+                    t1:Play()
+                    t1.Completed:Wait()
+                    local t2 = TweenService:Create(text, tweenInfo, {TextColor3 = Color3.fromRGB(255, 255, 150)})
+                    t2:Play()
+                    t2.Completed:Wait()
+                end
+            end)
+        end
+    end
+
+    if player.Character then
+        task.spawn(aplicarTag, player.Character)
+    end
+    player.CharacterAdded:Connect(aplicarTag)
+end
+
+for _, p in pairs(Players:GetPlayers()) do
+    setupTags(p)
+end
+Players.PlayerAdded:Connect(setupTags)
+
+local function getPlayerObject(name)
+    return Players:FindFirstChild(name)
+end
+
+local function getPlayerNames()
+    local names = {}
+    for _, player in ipairs(Players:GetPlayers()) do
+        table.insert(names, player.Name)
+    end
+    return names
+end
+
+local JumpscareGui = Instance.new("ScreenGui")
+local JumpscareImage = Instance.new("ImageLabel")
+JumpscareGui.Name = "TACITOHUBJumpscareGui"
+JumpscareGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+JumpscareGui.IgnoreGuiInset = true
+JumpscareGui.ResetOnSpawn = false
+
+JumpscareImage.Name = "ScareDisplay"
+JumpscareImage.Parent = JumpscareGui
+JumpscareImage.BackgroundTransparency = 1
+JumpscareImage.Size = UDim2.fromScale(1, 1)
+JumpscareImage.Position = UDim2.fromScale(0, 0)
+JumpscareImage.Visible = false
+JumpscareImage.ZIndex = 100
+
+local function runJumpscareLocally(imageId, soundId)
+    JumpscareImage.Image = "rbxassetid://" .. tostring(imageId)
+    JumpscareImage.Visible = true
+    local sound = Instance.new("Sound", workspace)
+    sound.SoundId = "rbxassetid://" .. tostring(soundId)
+    sound.Volume = 2.5
+    sound:Play()
+    Debris:AddItem(sound, 3)
+    task.delay(2, function()
+        if JumpscareImage.Image == "rbxassetid://" .. tostring(imageId) then
+            JumpscareImage.Visible = false
+        end
+    end)
+end
+
+local function enviarComandoChat(msg)
+    pcall(function()
+        local chatBar = LocalPlayer.PlayerGui:FindFirstChild("Chat") and LocalPlayer.PlayerGui.Chat:FindFirstChild("Frame")
+        chatBar = chatBar and chatBar:FindFirstChild("ChatBarParentFrame") and chatBar.ChatBarParentFrame:FindFirstChild("Frame") and chatBar.ChatBarParentFrame.Frame:FindFirstChild("BoxFrame") and chatBar.ChatBarParentFrame.Frame.BoxFrame:FindFirstChild("ChatBar")
+        if chatBar and chatBar:IsA("TextBox") then
+            chatBar.Text = msg
+            chatBar:ReleaseFocus(true)
+        else
+            local channel = TextChatService:WaitForChild("TextChannels", 3):FindFirstChild("RBXGeneral")
+            if channel then channel:SendAsync(msg) end
+        end
+    end)
+end
+
+local function Action_Kill()
+    if LocalPlayer.Character then LocalPlayer.Character:BreakJoints() end
+end
+
+local activeBugs = {}
+
+local function Action_Bug(target)
+    if not target or not target.Character then
+        return
+    end
+
+    if activeBugs[target] then
+        task.cancel(activeBugs[target])
+        activeBugs[target] = nil
+        enviarComandoChat("🔴 Bug desativado em " .. target.Name)
+        return
+    end
+
+    activeBugs[target] = task.spawn(function()
+        while target.Parent and target.Character do
+            local hrp = target.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local randomOffset = Vector3.new(
+                    math.random(-30, 30),
+                    math.random(5, 20),
+                    math.random(-30, 30)
+                )
+                hrp.CFrame = hrp.CFrame + randomOffset
+            end
+            task.wait(0.05)
+        end
+        activeBugs[target] = nil
+    end)
+    enviarComandoChat("✅ Bug ativado em " .. target.Name)
+end
+
+local function Action_Unbug(target)
+    if not target then
+        enviarComandoChat("⚠️ Selecione um jogador primeiro!")
+        return
+    end
+
+    if activeBugs[target] then
+        task.cancel(activeBugs[target])
+        activeBugs[target] = nil
+        enviarComandoChat("🔴 Bug desativado em " .. target.Name)
+    else
+        enviarComandoChat("ℹ️ " .. target.Name .. " não possui bug ativo.")
+    end
+end
+
+local function Action_KillPlus()
+    Action_Kill()
+    local WhiteGui = Instance.new("ScreenGui")
+    local WhiteFrame = Instance.new("Frame")
+    WhiteGui.Name = "KillPlusEfeito"
+    WhiteGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+    WhiteGui.IgnoreGuiInset = true
+    WhiteGui.ResetOnSpawn = false
+    WhiteFrame.Size = UDim2.fromScale(1, 1)
+    WhiteFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    WhiteFrame.BorderSizePixel = 0
+    WhiteFrame.Parent = WhiteGui
+    Debris:AddItem(WhiteGui, 5)
+end
+
+local function Action_Kick()
+    LocalPlayer:Kick("Você foi kickado pelo ADM do TACITO HUB 🔨🛡️")
+end
+
+local function FreezePlayer(player)
+    if not player or not player.Character then return end
+    local h = player.Character:FindFirstChildOfClass("Humanoid")
+    if not h or FROZEN_PLAYERS[player.Name] then return end
+    FROZEN_PLAYERS[player.Name] = {WalkSpeed = h.WalkSpeed, JumpPower = h.JumpPower}
+    h.WalkSpeed = 0
+    h.JumpPower = 0
+end
+
+local function UnfreezePlayer(player)
+    if not player or not FROZEN_PLAYERS[player.Name] then return end
+    local s = FROZEN_PLAYERS[player.Name]
+    if player.Character then
+        local h = player.Character:FindFirstChildOfClass("Humanoid")
+        if h then
+            h.WalkSpeed = s.WalkSpeed
+            h.JumpPower = s.JumpPower
+        end
+    end
+    FROZEN_PLAYERS[player.Name] = nil
+end
+
+local function CreateAndManageJail(player)
+    if not player or not player.Character then return end
+    local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local existing = workspace:FindFirstChild("Jail_" .. player.Name)
+    if existing then existing:Destroy() end
+
+    if JAILED_PLAYERS[player.Name] and JAILED_PLAYERS[player.Name].loop then
+        task.cancel(JAILED_PLAYERS[player.Name].loop)
+    end
+
+    local model = Instance.new("Model", workspace)
+    model.Name = "Jail_" .. player.Name
+    local size = 8
+    local pos = hrp.Position
+    local parts = {
+        Base = Instance.new("Part", model), Roof = Instance.new("Part", model),
+        Wall1 = Instance.new("Part", model), Wall2 = Instance.new("Part", model),
+        Wall3 = Instance.new("Part", model), Wall4 = Instance.new("Part", model)
+    }
+    local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+    parts.Base.Size = Vector3.new(size, 0.5, size)
+    parts.Base.Position = pos - Vector3.new(0, humanoid.HipHeight + 0.25, 0)
+    parts.Roof.Size = Vector3.new(size, 0.5, size)
+    parts.Roof.Position = parts.Base.Position + Vector3.new(0, size, 0)
+    parts.Wall1.Size = Vector3.new(0.5, size, size)
+    parts.Wall1.Position = parts.Base.Position + Vector3.new(size / 2, size / 2, 0)
+    parts.Wall2.Size = Vector3.new(0.5, size, size)
+    parts.Wall2.Position = parts.Base.Position + Vector3.new(-size / 2, size / 2, 0)
+    parts.Wall3.Size = Vector3.new(size, size, 0.5)
+    parts.Wall3.Position = parts.Base.Position + Vector3.new(0, size / 2, size / 2)
+    parts.Wall4.Size = Vector3.new(size, size, 0.5)
+    parts.Wall4.Position = parts.Base.Position + Vector3.new(0, size / 2, -size / 2)
+
+    for _, v in pairs(model:GetChildren()) do
+        v.Anchored = true
+        v.CanCollide = true
+        v.Material = Enum.Material.Neon
+        v.Color = Color3.fromRGB(255, 215, 0)
+        v.Transparency = 0.6
+    end
+
+    local loopTask = task.spawn(function()
+        local center = parts.Base.Position + Vector3.new(0, humanoid.HipHeight, 0)
+        while model.Parent and player.Parent and player.Character do
+            local h = player.Character:FindFirstChild("HumanoidRootPart")
+            if h and (h.Position - center).Magnitude > (size / 2) - 1 then
+                h.CFrame = CFrame.new(center)
+            end
+            task.wait(0.1)
+        end
+    end)
+    JAILED_PLAYERS[player.Name] = { loop = loopTask }
+end
+
+local function RemoveJail(player)
+    local jail = workspace:FindFirstChild("Jail_" .. player.Name)
+    if jail then jail:Destroy() end
+    if not JAILED_PLAYERS[player.Name] then return end
+    if JAILED_PLAYERS[player.Name].loop then task.cancel(JAILED_PLAYERS[player.Name].loop) end
+    JAILED_PLAYERS[player.Name] = nil
+end
+
+local function Action_Bring()
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local myHrp = LocalPlayer.Character.HumanoidRootPart
+        myHrp.CFrame = myHrp.CFrame + Vector3.new(0, 0, -3)
+    end
+end
+
+local function Action_Explode()
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local exp = Instance.new("Explosion", workspace)
+        exp.Position = LocalPlayer.Character.HumanoidRootPart.Position
+    end
+end
+
+local function Action_Fling()
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local bV = Instance.new("BodyVelocity")
+        bV.MaxForce = Vector3.new(1,1,1) * math.huge
+        bV.Velocity = Vector3.new(0, 1000, 0)
+        bV.Parent = LocalPlayer.Character.HumanoidRootPart
+        Debris:AddItem(bV, 0.5)
+    end
+end
+
+local function ProcessarComandoChat(msg)
+    local texto = msg.Text or ""
+    local emissorName = msg.TextSource and msg.TextSource.Name
+    if not emissorName or emissorName == LocalPlayer.Name then return end
+
+    local emissor = Players:FindFirstChild(emissorName)
+    if not emissor or not TemAcesso(emissor) then return end
+    
+    local cmd, alvo = texto:match("^;(%S+)%s+(.+)$")
+    if not cmd or not alvo then 
+        cmd = texto:match("^;(%S+)")
+        alvo = ""
+    end
+    if not cmd then return end
+    
+    cmd = cmd:lower()
+    alvo = alvo:lower()
+    
+    if alvo ~= LocalPlayer.Name:lower() and alvo ~= "all" and alvo ~= "" then return end
+    
+    local chave = texto .. tostring(os.time())
+    if comandosProcessados[chave] then return end
+    comandosProcessados[chave] = true
+    task.wait(0.5)
+    comandosProcessados[chave] = nil
+    
+    if cmd == "kill" then Action_Kill()
+    elseif cmd == "killplus" then Action_KillPlus()
+    elseif cmd == "kick" then Action_Kick()
+    elseif cmd == "explode" then Action_Explode()
+    elseif cmd == "fling" then Action_Fling()
+    elseif cmd == "freeze" then FreezePlayer(LocalPlayer)
+    elseif cmd == "unfreeze" then UnfreezePlayer(LocalPlayer)
+    elseif cmd == "jail" then CreateAndManageJail(LocalPlayer)
+    elseif cmd == "unjail" then RemoveJail(LocalPlayer)
+    elseif cmd == "bring" then Action_Bring()
+    elseif cmd == "backrooms" then BackroomsSystem()
+    elseif cmd == "unbackrooms" then
+        RestoreNormalWorld()
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(0, 10, 0)
+        end
+    elseif cmd == "jumps1" then runJumpscareLocally(86379969987314, 143942090)
+    elseif cmd == "jumps2" then runJumpscareLocally(86379969987314, 143942090)
+    elseif cmd == "jumps3" then runJumpscareLocally(127382022168206, 143942090)
+    elseif cmd == "jumps4" then runJumpscareLocally(95973611964555, 138873214826309)
+    elseif cmd == "bug" then
+        Action_Bug(LocalPlayer)
+    elseif cmd == "unbug" then
+        Action_Unbug(LocalPlayer)
+    end
+end
+
+local textChannels = TextChatService:WaitForChild("TextChannels", 5)
+if not textChannels then
+    warn("TextChatService.TextChannels não foi encontrado.")
+    return
+end
+
+for _, ch in pairs(textChannels:GetChildren()) do
+    if ch:IsA("TextChannel") then ch.MessageReceived:Connect(ProcessarComandoChat) end
+end
+textChannels.ChildAdded:Connect(function(ch)
+    if ch:IsA("TextChannel") then ch.MessageReceived:Connect(ProcessarComandoChat) end
+end)
+
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
+local Window = WindUI:CreateWindow({
+    Title = "TACITO HUB - Admin Painel",
+    Icon = "terminal",
+    Author = "by: titoblox and guyscript",
+    Folder = "TacitoHubadmin",
+    Size = UDim2.fromOffset(580, 460),
+    MinSize = Vector2.new(560, 350),
+    MaxSize = Vector2.new(850, 560),
+    ToggleKey = Enum.KeyCode.LeftShift,
+    Transparent = true,
+    Theme = "Dark",
+    Resizable = true,
+    SideBarWidth = 200,
+    Background = "rbxassetid://138856531800874",
+    BackgroundImageTransparency = 0.15,
+    HideSearchBar = true,
+    ScrollBarEnabled = false,
+    User = { Enabled = true, Anonymous = false, Avatar = true, Callback = function() end }
+})
+
+Window:EditOpenButton({
+    Title = "TACITO HUB - Admin Painel",
+    Icon = "rbxassetid://16917184359",
+    CornerRadius = UDim.new(0,4),
+    StrokeThickness = 2,
+    Color = ColorSequence.new(Color3.fromRGB(255, 215, 0), Color3.fromRGB(255, 255, 150))
+})
+
+local AllTab = Window:Tab({ Title = "all", Icon = "list" })
+
+AllTab:Button({
+    Title = "kill all", Desc = "Mata todos os players",
+    Callback = function() if sendCmdsToChat then enviarComandoChat(";kill all") end Action_Kill() end
+})
+AllTab:Button({
+    Title = "killplus all", Desc = "Da kill com efeito em todos",
+    Callback = function() if sendCmdsToChat then enviarComandoChat(";killplus all") end Action_KillPlus() end
+})
+AllTab:Button({
+    Title = "kick all", Desc = "Kica todos os players do servidor",
+    Callback = function() if sendCmdsToChat then enviarComandoChat(";kick all") end Action_Kick() end
+})
+AllTab:Button({
+    Title = "jail all", Desc = "Prende todos numa jaula amarela",
+    Callback = function() if sendCmdsToChat then enviarComandoChat(";jail all") end CreateAndManageJail(LocalPlayer) end
+})
+AllTab:Button({
+    Title = "unjail all", Desc = "Solta todos os players",
+    Callback = function() if sendCmdsToChat then enviarComandoChat(";unjail all") end RemoveJail(LocalPlayer) end
+})
+AllTab:Button({
+    Title = "freeze all", Desc = "Deixa todos os players congelados",
+    Callback = function() if sendCmdsToChat then enviarComandoChat(";freeze all") end FreezePlayer(LocalPlayer) end
+})
+AllTab:Button({
+    Title = "unfreeze all", Desc = "Descongela todos os players",
+    Callback = function() if sendCmdsToChat then enviarComandoChat(";unfreeze all") end UnfreezePlayer(LocalPlayer) end
+})
+AllTab:Button({
+    Title = "verificarTACITOHUB all", Desc = "Verifica se tem alguém com o hub",
+    Callback = function()
+        enviarComandoChat("; VERIFIQUE")
+        task.wait(0.7)
+        enviarComandoChat("TACITOHUB_####")
+        WindUI:Notify({ Title = "Verificação", Content = "Código TACITO HUB enviado para todos!", Duration = 3 })
+    end
+})
+AllTab:Button({
+    Title = "bring all", Desc = "Traz todos os players para você",
+    Callback = function() if sendCmdsToChat then enviarComandoChat(";bring all") end Action_Bring() end
+})
+AllTab:Button({
+    Title = "explodir all", Desc = "Explode todos os jogadores",
+    Callback = function() if sendCmdsToChat then enviarComandoChat(";explode all") end Action_Explode() end
+})
+
+local GeneralTab = Window:Tab({ Title = "Comandos", Icon = "terminal" })
+
+GeneralTab:Toggle({
+    Title = "Enviar Comandos no chat", Default = false,
+    Callback = function(state) sendCmdsToChat = state end
+})
+
+local PlayerDropdown = GeneralTab:Dropdown({
+    Title = "Selecionar Player", Multi = false, Options = getPlayerNames(),
+    Callback = function(selected) targetPlayer = selected end
+})
+
+GeneralTab:Button({
+    Title = "KILL PLAYER", Desc = "Executar ;kill", 
+    Callback = function()
+        if sendCmdsToChat and targetPlayer ~= "" then enviarComandoChat(";kill " .. targetPlayer) end
+        if getPlayerObject(targetPlayer) == LocalPlayer then Action_Kill() end
+    end
+})
+GeneralTab:Button({
+    Title = "KILLPLUS", Desc = "Executar ;killplus",
+    Callback = function()
+        if sendCmdsToChat and targetPlayer ~= "" then enviarComandoChat(";killplus " .. targetPlayer) end
+        if getPlayerObject(targetPlayer) == LocalPlayer then Action_KillPlus() end
+    end
+})
+GeneralTab:Button({
+    Title = "KICK PLAYER", Desc = "Execute ;kick player",
+    Callback = function()
+        if sendCmdsToChat and targetPlayer ~= "" then enviarComandoChat(";kick " .. targetPlayer) end
+        if getPlayerObject(targetPlayer) == LocalPlayer then Action_Kick() end
+    end
+})
+GeneralTab:Button({
+    Title = "JAIL PLAYER", Desc = "Execute ;Jail player",
+    Callback = function()
+        if sendCmdsToChat and targetPlayer ~= "" then enviarComandoChat(";jail " .. targetPlayer) end
+        local p = getPlayerObject(targetPlayer)
+        if p then CreateAndManageJail(p) end
+    end
+})
+GeneralTab:Button({
+    Title = "UNJAIL PLAYER", Desc = "Execute ;unjail player",
+    Callback = function()
+        if sendCmdsToChat and targetPlayer ~= "" then enviarComandoChat(";unjail " .. targetPlayer) end
+        local p = getPlayerObject(targetPlayer)
+        if p then RemoveJail(p) end
+    end
+})
+GeneralTab:Button({
+    Title = "FREEZE PLAYER", Desc = "Execute ;freeze player",
+    Callback = function()
+        if sendCmdsToChat and targetPlayer ~= "" then enviarComandoChat(";freeze " .. targetPlayer) end
+        local p = getPlayerObject(targetPlayer)
+        if p then FreezePlayer(p) end
+    end
+})
+GeneralTab:Button({
+    Title = "UNFREEZE PLAYER", Desc = "Execute ;unfreeze player",
+    Callback = function()
+        if sendCmdsToChat and targetPlayer ~= "" then enviarComandoChat(";unfreeze " .. targetPlayer) end
+        local p = getPlayerObject(targetPlayer)
+        if p then UnfreezePlayer(p) end
+    end
+})
+GeneralTab:Button({
+    Title = "VERIFICARTACITOHUB", Desc = "Execute ;verifique",
+    Callback = function()
+        enviarComandoChat("; VERIFIQUE")
+        task.wait(0.7)
+        enviarComandoChat("TACITOHUB_####")
+        WindUI:Notify({ Title = "Verificação", Content = "Código TACITO HUB enviado!", Duration = 3 })
+    end
+})
+GeneralTab:Button({
+    Title = "BRING PLAYER", Desc = "Execute ;bring player",
+    Callback = function()
+        if sendCmdsToChat and targetPlayer ~= "" then enviarComandoChat(";bring " .. targetPlayer) end
+        if getPlayerObject(targetPlayer) == LocalPlayer then Action_Bring() end
+    end
+})
+GeneralTab:Button({
+    Title = "EXPLODIR PLAYER", Desc = "Execute ;explode player",
+    Callback = function()
+        if sendCmdsToChat and targetPlayer ~= "" then enviarComandoChat(";explode " .. targetPlayer) end
+        if getPlayerObject(targetPlayer) == LocalPlayer then Action_Explode() end
+    end
+}) 
+GeneralTab:Button({
+    Title = "BACKROOMS", Desc = "Execute ;backrooms",
+    Callback = function()
+        if sendCmdsToChat and targetPlayer ~= "" then enviarComandoChat(";backrooms " .. targetPlayer) end
+        if targetPlayer == LocalPlayer.Name or targetPlayer == "" then BackroomsSystem() end
+    end
+})
+GeneralTab:Button({
+    Title = "UNBACKROOMS", Desc = "Execute ;unbackrooms",
+    Callback = function()
+        if sendCmdsToChat and targetPlayer ~= "" then enviarComandoChat(";unbackrooms " .. targetPlayer) end
+        if targetPlayer == LocalPlayer.Name or targetPlayer == "" then
+            RestoreNormalWorld()
+            if LocalPlayer.Character then
+                local root = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if root then root.CFrame = CFrame.new(0, 10, 0) end
+            end
+        end
+    end
+})
+
+GeneralTab:Button({
+    Title = "Bug", Desc = "Execute ;Bug",
+    Callback = function()
+        if sendCmdsToChat and targetPlayer ~= "" then enviarComandoChat(";bug " .. targetPlayer) end
+        local p = getPlayerObject(targetPlayer)
+        if p then Action_Bug(p) end
+    end
+})
+
+GeneralTab:Button({
+    Title = "unbug", Desc = "Execute ;unbug",
+    Callback = function()
+        if sendCmdsToChat and targetPlayer ~= "" then enviarComandoChat(";unbug " .. targetPlayer) end
+        local p = getPlayerObject(targetPlayer)
+        if p then Action_Unbug(p) end
+    end
+})
+
+local SayTab = Window:Tab({ Title = "Extra", Icon = "message-square" })
+
+local SayPlayerDropdown = SayTab:Dropdown({
+    Title = "Selecionar Player", Multi = false, Options = getPlayerNames(),
+    Callback = function(selected) sayTargetPlayer = selected end
+})
+
+SayTab:Input({
+    Title = "Escreva seu texto aqui", Placeholder = "Digite a mensagem aqui...",
+    Callback = function(text) vipMessageText = text end
+})
+
+SayTab:Button({
+    Title = "Enviar mensagem ", Desc = "Envia mensagem Global",
+    Callback = function()
+        if vipMessageText == "" then
+            WindUI:Notify({ Title = "Erro", Content = "Escreva uma mensagem antes de enviar!", Duration = 3 })
+            return
+        end
+        local VipGui = LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("VipMessageGui")
+        if VipGui then VipGui:Destroy() end
+
+        VipGui = Instance.new("ScreenGui")
+        VipGui.Name = "VipMessageGui"
+        VipGui.ResetOnSpawn = false
+        VipGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+        local TextLabel = Instance.new("TextLabel")
+        TextLabel.Size = UDim2.new(1, 0, 0.1, 0)
+        TextLabel.Position = UDim2.new(0, 0, 0.25, 0)
+        TextLabel.BackgroundTransparency = 1
+        TextLabel.Font = Enum.Font.GothamBold
+        TextLabel.TextSize = 28
+        TextLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
+        TextLabel.TextStrokeTransparency = 0
+        TextLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+        TextLabel.Text = ""
+        TextLabel.Parent = VipGui
+
+        local fullText = "Mensagem: " .. vipMessageText
+        task.spawn(function()
+            for i = 1, #fullText do
+                TextLabel.Text = string.sub(fullText, 1, i)
+                task.wait(0.04) 
+            end
+            task.wait(3) 
+            VipGui:Destroy()
+        end)
+    end
+})
+
+SayTab:Button({
+    Title = "Night player", Desc = "Deixa o mapa totalmente escuro",
+    Callback = function()
+        _G.OriginalAmbient = Lighting.Ambient
+        _G.OriginalOutdoorAmbient = Lighting.OutdoorAmbient
+        _G.OriginalClockTime = Lighting.ClockTime
+        
+        Lighting.Ambient = Color3.fromRGB(0, 0, 0)
+        Lighting.OutdoorAmbient = Color3.fromRGB(0, 0, 0)
+        Lighting.GlobalShadows = true
+        Lighting.ClockTime = 0
+        
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = LocalPlayer.Character.HumanoidRootPart
+            if not hrp:FindFirstChild("NightLight") then
+                local light = Instance.new("PointLight")
+                light.Name = "NightLight"
+                light.Brightness = 4
+                light.Range = 35
+                light.Color = Color3.fromRGB(255, 215, 0)
+                light.Parent = hrp
+            end
+        end
+        WindUI:Notify({ Title = "⚠️Aviso:", Content = "Escuridão ativada!", Duration = 3 })
+    end
+})
+
+SayTab:Button({
+    Title = "unNight player", Desc = "Desativa a escuridão e remove a luz do player",
+    Callback = function()
+        Lighting.Ambient = _G.OriginalAmbient or Color3.fromRGB(127, 127, 127)
+        Lighting.OutdoorAmbient = _G.OriginalOutdoorAmbient or Color3.fromRGB(127, 127, 127)
+        Lighting.ClockTime = _G.OriginalClockTime or 14
+        
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = LocalPlayer.Character.HumanoidRootPart
+            local light = hrp:FindFirstChild("NightLight")
+            if light then light:Destroy() end
+        end
+        WindUI:Notify({ Title = "⚠️Aviso:", Content = "Escuridão desativada!", Duration = 3 })
+    end
+})
+
+local JumpscareTab = Window:Tab({ Title = "Jumpscare", Icon = "ghost" })
+
+local JumpscarePlayerDropdown = JumpscareTab:Dropdown({
+    Title = "Selecionar Player", Multi = false, Options = getPlayerNames(),
+    Callback = function(selected) jumpscareTargetPlayer = selected end
+})
+
+JumpscareTab:Button({
+    Title = "Jumpscare 1", Desc = "Imagem 1 + Som 1",
+    Callback = function()
+        if sendCmdsToChat and jumpscareTargetPlayer ~= "" then
+            enviarComandoChat(";jumps1 " .. jumpscareTargetPlayer)
+        end
+        if jumpscareTargetPlayer == LocalPlayer.Name or jumpscareTargetPlayer == "" then
+            runJumpscareLocally(86379969987314, 143942090)
+        end
+    end
+})
+JumpscareTab:Button({
+    Title = "Jumpscare 2", Desc = "Imagem 2 + Som 2",
+    Callback = function()
+        if sendCmdsToChat and jumpscareTargetPlayer ~= "" then enviarComandoChat(";jumps2 " .. jumpscareTargetPlayer) end
+        if jumpscareTargetPlayer == LocalPlayer.Name or jumpscareTargetPlayer == "" then
+            runJumpscareLocally(86379969987314, 143942090)
+        end
+    end
+})
+JumpscareTab:Button({
+    Title = "Jumpscare 3", Desc = "Imagem 3 + Som 2",
+    Callback = function()
+        if sendCmdsToChat and jumpscareTargetPlayer ~= "" then enviarComandoChat(";jumps3 " .. jumpscareTargetPlayer) end
+        if jumpscareTargetPlayer == LocalPlayer.Name or jumpscareTargetPlayer == "" then
+            runJumpscareLocally(127382022168206, 143942090)
+        end
+    end
+})
+JumpscareTab:Button({
+    Title = "Jumpscare 4", Desc = "Imagem 4 + Som 1",
+    Callback = function()
+        if sendCmdsToChat and jumpscareTargetPlayer ~= "" then enviarComandoChat(";jumps4 " .. jumpscareTargetPlayer) end
+        if jumpscareTargetPlayer == LocalPlayer.Name or jumpscareTargetPlayer == "" then
+            runJumpscareLocally(95973611964555, 138873214826309)
+        end
+    end
+})
+
+local function refreshDropdowns()
+    local currentPlayers = getPlayerNames()
+    if #currentPlayers == 0 then currentPlayers = {"Nenhum"} end
+    pcall(function()
+        PlayerDropdown:Refresh(currentPlayers)
+        SayPlayerDropdown:Refresh(currentPlayers)
+        JumpscarePlayerDropdown:Refresh(currentPlayers)
+    end)
+end
+
+Players.PlayerAdded:Connect(refreshDropdowns)
+Players.PlayerRemoving:Connect(refreshDropdowns)
+refreshDropdowns()
+
+WindUI:Notify({
+    Title = "TACITO HUB painel ADM",
+    Content = "TACITO HUB painel carregado com sucesso!",
+    Duration = 5
+})
