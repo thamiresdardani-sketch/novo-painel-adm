@@ -10,7 +10,7 @@ local LocalPlayer = Players.LocalPlayer
 
 local Donos = { 
     ["guyscript89702"] = true, 
-    ["poathecat123"] = true, 
+    ["Bartlett_zx"] = true, 
 }
 
 local UsuariosTacito = {
