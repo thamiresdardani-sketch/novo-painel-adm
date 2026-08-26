@@ -186,7 +186,7 @@ local function setupTags(player)
                     local t1 = TweenService:Create(text, tweenInfo, {TextColor3 = Color3.fromRGB(255, 215, 0)})
                     t1:Play()
                     t1.Completed:Wait()
-                    local t2 = TweenService:Create(text, tweenInfo, {TextColor3 = Color3.fromRGB(255, 255, 150)})
+                    local t2 = TweenService:Create(text, tweenInfo, {TextColor3 = Color3.fromRGB(0, 0, 0)})
                     t2:Play()
                     t2.Completed:Wait()
                 end
