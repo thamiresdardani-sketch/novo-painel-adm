@@ -156,7 +156,7 @@ local function setupTags(player)
 
             local bg = Instance.new("Frame")
             bg.Size = UDim2.new(1,0,1,0)
-            bg.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+            bg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
             bg.BackgroundTransparency = 0.1
             bg.BorderSizePixel = 0
             bg.Parent = gui
